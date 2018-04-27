@@ -1,61 +1,115 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
+    android:orientation="vertical"
     tools:context="com.example.wen.videoplayer_wen.MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="360dp"
+        android:layout_marginTop="100dp"
+        android:background="@android:color/black"
+        android:orientation="vertical">
+
+        <SurfaceView
+            android:id="@+id/surfaceView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center"
-        android:padding="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="12dp">
+
+
+        <TextView
+            android:id="@+id/tv_current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="02:00" />
+
+        <SeekBar
+            android:id="@+id/seekbar"
+            android:layout_width="240dp"
+            android:layout_height="wrap_content" />
+
+        <!--<ProgressBar-->
+        <!--android:id="@+id/progressBar"-->
+        <!--style="?android:attr/progressBarStyleHorizontal"-->
+        <!--android:layout_width="240dp"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_margin="12dp" />-->
+
+        <TextView
+            android:id="@+id/tv_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="04:59" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:padding="16dp">
 
 
         <ImageButton
             android:id="@+id/volume_mute"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_margin="5dp"
             android:background="@android:color/white"
+            android:scaleType="fitXY"
             app:srcCompat="@drawable/ic_volume_mute_black_24dp" />
 
         <ImageButton
             android:id="@+id/fast_rewind"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_margin="5dp"
             android:background="@android:color/white"
+            android:scaleType="fitXY"
             app:srcCompat="@drawable/ic_fast_rewind_black_24dp" />
-        
+
         <ImageButton
             android:id="@+id/player_arrow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_margin="5dp"
             android:background="@android:color/white"
+            android:scaleType="fitXY"
             app:srcCompat="@drawable/ic_play_arrow_black_24dp" />
 
         <ImageButton
             android:id="@+id/fast_forward"
-            android:layout_width="wrap_content"
+
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_margin="5dp"
-            android:layout_height="wrap_content"
             android:background="@android:color/white"
+            android:scaleType="fitXY"
             app:srcCompat="@drawable/ic_fast_forward_black_24dp" />
 
         <ImageButton
             android:id="@+id/fullscreen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:layout_margin="5dp"
             android:background="@android:color/white"
+            android:scaleType="fitXY"
             app:srcCompat="@drawable/ic_fullscreen_black_24dp" />
 
     </LinearLayout>
 
-</android.support.constraint.ConstraintLayout>
+</LinearLayout>
