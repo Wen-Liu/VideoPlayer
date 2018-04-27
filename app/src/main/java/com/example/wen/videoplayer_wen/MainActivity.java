@@ -1,7 +1,10 @@
 package com.example.wen.videoplayer_wen;
 
+import android.app.Service;
 import android.content.Context;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -18,6 +21,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -41,6 +46,20 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private String mVideoUrl = "https://s3-ap-northeast-1.amazonaws.com/mid-exam/Video/taeyeon.mp4";
     private SurfaceHolder mSurfaceHolder;
     private MediaPlayer mMediaPlayer;
+
+    private boolean isMute = false;
+    private boolean isStart;
+    private boolean isFirst = true;
+    private int mProgress;
+
+    //屏幕宽度
+    private int mScreenWidth;
+    //屏幕高度
+    private int mScreenHeight;
+    //记录现在的播放位置
+    private int mCurrentPos;
+    private boolean isLand;
+    private Timer mTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,13 +108,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             mMediaPlayer.setDataSource(mVideoUrl);
             mMediaPlayer.prepare();
             mTotalTime.setText(timeParse(mMediaPlayer.getDuration()));
+            mSeekBar.setMax(mMediaPlayer.getDuration());
 //                    mMediaPlayer.setOnPreparedListener(MainActivity.this);
         } catch (IOException e) {
             Log.d(LOG_TAG, e.getMessage(), e);
             e.printStackTrace();
         }
     }
-    
+
 
     @Override
     public void surfaceChanged(SurfaceHolder surfaceHolder, int i, int i1, int i2) {
@@ -114,23 +134,46 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.volume_mute:
+                AudioManager audioManager = (AudioManager) getSystemService(Service.AUDIO_SERVICE);
 
-
+                if (isMute) {
+                    audioManager.adjustStreamVolume(audioManager.STREAM_MUSIC, audioManager.ADJUST_UNMUTE, AudioManager.FLAG_PLAY_SOUND);
+                    mVolumeMute.setImageResource(R.drawable.ic_volume_mute_black_24dp);
+                    isMute = false;
+                    Log.d(LOG_TAG, "取消靜音");
+                } else {
+                    audioManager.adjustStreamVolume(audioManager.STREAM_MUSIC, audioManager.ADJUST_MUTE, AudioManager.FLAG_PLAY_SOUND);
+                    mVolumeMute.setImageResource(R.drawable.ic_volume_off_black_24dp);
+                    isMute = true;
+                    Toast.makeText(this, "靜音", Toast.LENGTH_SHORT).show();
+                    Log.d(LOG_TAG, "靜音");
+                }
                 break;
+
             case R.id.fast_rewind:
+                mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition()-15000);
 
 
                 break;
             case R.id.player_arrow:
                 Log.d(LOG_TAG, "click player_arrow");
-                Toast.makeText(this, "player_arrow", Toast.LENGTH_SHORT).show();
 
                 if (!mMediaPlayer.isPlaying()) {
+                    if (isFirst) {  //第一次啟用產生new Timer();
+                        mTimer = new Timer();
+                        mTimer.schedule(mTimerTask, 0, 100);
+                        isFirst = false;
+                    }
+                    isStart = true;
                     mMediaPlayer.start();
-                    mPlayerArrow.setImageResource(R.drawable.ic_play_arrow_black_24dp);
-                } else if (mMediaPlayer.isPlaying()) {
-                    mMediaPlayer.pause();
                     mPlayerArrow.setImageResource(R.drawable.ic_pause_black_24dp);
+                    Toast.makeText(this, "播放", Toast.LENGTH_SHORT).show();
+
+                } else if (mMediaPlayer.isPlaying()) {
+                    isStart = false;
+                    mMediaPlayer.pause();
+                    mPlayerArrow.setImageResource(R.drawable.ic_play_arrow_black_24dp);
+                    Toast.makeText(this, "暫停播放", Toast.LENGTH_SHORT).show();
                 }
 
                 break;
@@ -154,22 +197,26 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
 
     @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean b) {
+    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         Log.d(LOG_TAG, "onProgressChanged " + seekBar.getProgress());
+        mCurrentTime.setText(timeParse(seekBar.getProgress()));
 
-        mCurrentTime.setText(String.valueOf(seekBar.getProgress()));
+        if (fromUser) {
+            mProgress = progress;
+        }
     }
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
         Log.d(LOG_TAG, "onStartTrackingTouch");
-        Toast.makeText(this, "onStartTrackingTouch", Toast.LENGTH_SHORT).show();
+        isStart = false;
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         Log.d(LOG_TAG, "onStopTrackingTouch");
-        Toast.makeText(this, "onStopTrackingTouch", Toast.LENGTH_SHORT).show();
+        isStart = true;
+        mMediaPlayer.seekTo(mProgress);
     }
 
 
@@ -189,6 +236,64 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         time += second;
         return time;
     }
+
+
+    private TimerTask mTimerTask = new TimerTask() {
+        @Override
+        public void run() {
+            if (isStart) {   //如果isStart = true,開始運行
+                mSeekBar.setProgress(mMediaPlayer.getCurrentPosition());
+            }  //TimerTask會一直更新，使bar會隨著歌曲播放而改變bar位置
+
+        }
+    };
+
+
+//    private void resetVideoSize() {
+//
+//        float areaWH = 0.0f;
+//        int height;
+//
+//        if (!isLand) {
+//            // 竖屏16:9
+//            height = (int) (mScreenWidth / SHOW_SCALE);
+//            areaWH = SHOW_SCALE;
+//        } else {
+//            //横屏按照手机屏幕宽高计算比例
+//            height = mScreenHeight;
+//            areaWH = mScreenWidth / mScreenHeight;
+//        }
+//
+//        RelativeLayout.LayoutParams layoutParams =
+//                new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height);
+//        mSurfaceLayout.setLayoutParams(layoutParams);
+//
+//        int mediaWidth = mMediaPlayer.getVideoWidth();
+//        int mediaHeight = mMediaPlayer.getVideoHeight();
+//
+//
+//        float mediaWH = mediaWidth * 1.0f / mediaHeight;
+//
+//        RelativeLayout.LayoutParams layoutParamsSV = null;
+//
+//
+//        if (areaWH > mediaWH) {
+//            //直接放会矮胖
+//            int svWidth = (int) (height * mediaWH);
+//            layoutParamsSV = new RelativeLayout.LayoutParams(svWidth, height);
+//            layoutParamsSV.addRule(RelativeLayout.CENTER_IN_PARENT);
+//            mSurfaceView.setLayoutParams(layoutParamsSV);
+//        }
+//
+//        if (areaWH < mediaWH) {
+//            //直接放会瘦高。
+//            int svHeight = (int) (mScreenWidth / mediaWH);
+//            layoutParamsSV = new RelativeLayout.LayoutParams(mScreenWidth, svHeight);
+//            layoutParamsSV.addRule(RelativeLayout.CENTER_IN_PARENT);
+//            mSurfaceView.setLayoutParams(layoutParamsSV);
+//        }
+//
+//    }
 
 
 }
