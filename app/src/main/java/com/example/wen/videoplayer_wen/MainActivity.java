@@ -3,6 +3,8 @@ package com.example.wen.videoplayer_wen;
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
@@ -104,6 +106,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @Override
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
+        Log.d(LOG_TAG, "surfaceCreated");
+
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setDisplay(mSurfaceHolder);
 
@@ -136,7 +140,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     @Override
     public void surfaceDestroyed(SurfaceHolder surfaceHolder) {
         Log.d(LOG_TAG, "surfaceDestroyed");
-
+        if (mMediaPlayer != null) {
+            mMediaPlayer.pause();
+            mCurrentPos = mMediaPlayer.getCurrentPosition();
+        }
     }
 
 
@@ -194,14 +201,21 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
             case R.id.fullscreen:
                 Log.d(LOG_TAG, "click fullscreen");
-                if (isFullScreen) {
-                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_black_24dp);
-                    isFullScreen = false;
-
+//                if (isFullScreen) {
+//                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_black_24dp);
+//                    isFullScreen = false;
+//
+//                } else {
+                if (Configuration.ORIENTATION_LANDSCAPE == this.getResources()
+                        .getConfiguration().orientation) {
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
                 } else {
-                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_exit_black_24dp);
-                    isFullScreen = true;
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
                 }
+
+//                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_exit_black_24dp);
+//                    isFullScreen = true;
+//                }
 
 //                ViewGroup.LayoutParams layoutParams = mSurfaceView.getLayoutParams();
 //                layoutParams.width = ViewGroup.LayoutParams.FILL_PARENT;
@@ -218,7 +232,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        Log.d(LOG_TAG, "onProgressChanged " + seekBar.getProgress());
+//        Log.d(LOG_TAG, "onProgressChanged " + seekBar.getProgress());
         mCurrentTime.setText(timeParse(seekBar.getProgress()));
 
         if (fromUser) {
@@ -273,6 +287,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onPrepared(MediaPlayer mediaPlayer) {
         Log.d(LOG_TAG, "onPrepared");
 
+        if (mCurrentPos != 0) {
+            mMediaPlayer.seekTo(mCurrentPos);
+        }
+
+        resetVideoSize();
+    }
+
+    private void resetVideoSize() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
 
@@ -288,10 +310,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         /* 設置視頻的寬度和高度*/
         if (mVideoWidth != 0 && mVideoHeight != 0) {
-            if (mVideoWidth > mVideoHeight) {
-                mSurfaceHolder.setFixedSize(mScreenWidth, mVideoHeight * mScreenWidth / mVideoWidth);
+            if (mScreenHeight > mScreenWidth) {
+                if (mVideoWidth > mVideoHeight) {
+                    mSurfaceHolder.setFixedSize(mScreenWidth, mVideoHeight * mScreenWidth / mVideoWidth);
+                } else {
+                    mSurfaceHolder.setFixedSize(mVideoWidth * mScreenWidth / mVideoHeight, mScreenWidth);
+                }
             } else {
-                mSurfaceHolder.setFixedSize(mVideoWidth * mScreenWidth / mVideoHeight, mScreenWidth);
+                if (mVideoWidth > mVideoHeight) {
+                    mSurfaceHolder.setFixedSize(mVideoWidth * mScreenWidth / mVideoHeight, mScreenWidth);
+                } else {
+                    mSurfaceHolder.setFixedSize(mScreenWidth, mVideoHeight * mScreenWidth / mVideoWidth);
+                }
             }
         }
     }
@@ -311,7 +341,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
 
-//    private void resetVideoSize() {
+    //    private void resetVideoSize() {
 //
 //        float areaWH = 0.0f;
 //        int height;
