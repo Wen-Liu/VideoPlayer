@@ -64,6 +64,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     private int mScreenHeight;
     private int mVideoWidth;
     private int mVideoHeight;
+    private float mScreenRatioWH;
+    private float mVideoRatioWH;
     //记录现在的播放位置
     private int mCurrentPos;
     private boolean isLand;
@@ -108,25 +110,32 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void surfaceCreated(SurfaceHolder surfaceHolder) {
         Log.d(LOG_TAG, "surfaceCreated");
 
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setDisplay(mSurfaceHolder);
+        if (mMediaPlayer != null) {//从Home 返回
+            mMediaPlayer.setDisplay(mSurfaceHolder);
+            mMediaPlayer.start();
+        } else {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setDisplay(mSurfaceHolder);
 
-        try {
-            mMediaPlayer.reset();
-            //mediaPlayer.setDisplay(...)必需在callback的surfaceCreated(...) method裡叫用，否則會有聲音無影像
-            //也就是說mediaPlayer.setDisplay(...)必需在整個畫面render完成後才能叫用，否則會出現異常
-            mMediaPlayer.setDataSource(mVideoUrl);
-            mMediaPlayer.prepare();
-            mMediaPlayer.setOnBufferingUpdateListener(this);
-            mMediaPlayer.setOnPreparedListener(this);
-            mMediaPlayer.setOnCompletionListener(this);
+            try {
+                mMediaPlayer.reset();
+                //mediaPlayer.setDisplay(...)必需在callback的surfaceCreated(...) method裡叫用，否則會有聲音無影像
+                //也就是說mediaPlayer.setDisplay(...)必需在整個畫面render完成後才能叫用，否則會出現異常
+                mMediaPlayer.setDataSource(mVideoUrl);
+                mMediaPlayer.prepare();
 
-            mTotalTime.setText(timeParse(mMediaPlayer.getDuration()));
-            mSeekBar.setMax(mMediaPlayer.getDuration());
+                mMediaPlayer.setOnBufferingUpdateListener(this);
+                mMediaPlayer.setOnPreparedListener(this);
+                mMediaPlayer.setOnCompletionListener(this);
 
-        } catch (IOException e) {
-            Log.d(LOG_TAG, e.getMessage(), e);
-            e.printStackTrace();
+                mTotalTime.setText(timeParse(mMediaPlayer.getDuration()));
+                mSeekBar.setMax(mMediaPlayer.getDuration());
+                mMediaPlayer.start();
+
+            } catch (IOException e) {
+                Log.d(LOG_TAG, e.getMessage(), e);
+                e.printStackTrace();
+            }
         }
     }
 
@@ -192,8 +201,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                     Toast.makeText(this, "暫停播放", Toast.LENGTH_SHORT).show();
                     Log.d(LOG_TAG, "click 暫停播放");
                 }
-
                 break;
+
             case R.id.fast_forward:
                 Log.d(LOG_TAG, "click fast_forward");
                 mMediaPlayer.seekTo(mMediaPlayer.getCurrentPosition() + 15000);
@@ -201,21 +210,16 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
             case R.id.fullscreen:
                 Log.d(LOG_TAG, "click fullscreen");
-//                if (isFullScreen) {
-//                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_black_24dp);
-//                    isFullScreen = false;
-//
-//                } else {
                 if (Configuration.ORIENTATION_LANDSCAPE == this.getResources()
                         .getConfiguration().orientation) {
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_black_24dp);
+                    isFullScreen = false;
                 } else {
                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_exit_black_24dp);
+                    isFullScreen = true;
                 }
-
-//                    mFullscreen.setImageResource(R.drawable.ic_fullscreen_exit_black_24dp);
-//                    isFullScreen = true;
-//                }
 
 //                ViewGroup.LayoutParams layoutParams = mSurfaceView.getLayoutParams();
 //                layoutParams.width = ViewGroup.LayoutParams.FILL_PARENT;
@@ -300,8 +304,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
         mScreenWidth = displayMetrics.widthPixels;
         mScreenHeight = displayMetrics.heightPixels;
+        mScreenRatioWH = mScreenWidth / mScreenHeight;
+
         mVideoWidth = mMediaPlayer.getVideoWidth();
         mVideoHeight = mMediaPlayer.getVideoHeight();
+        mVideoRatioWH = mVideoWidth / mVideoHeight;
 
         Log.d(LOG_TAG, "mScreenWidth = " + mScreenWidth);
         Log.d(LOG_TAG, "mScreenHeight = " + mScreenHeight);
@@ -313,14 +320,18 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             if (mScreenHeight > mScreenWidth) {
                 if (mVideoWidth > mVideoHeight) {
                     mSurfaceHolder.setFixedSize(mScreenWidth, mVideoHeight * mScreenWidth / mVideoWidth);
+                    Log.d(LOG_TAG, "setFixedSize1 = " + mScreenWidth + " , " + mVideoHeight * mScreenWidth / mVideoWidth);
                 } else {
                     mSurfaceHolder.setFixedSize(mVideoWidth * mScreenWidth / mVideoHeight, mScreenWidth);
+                    Log.d(LOG_TAG, "setFixedSize2 = " + mVideoWidth * mScreenWidth / mVideoHeight + " , " + mScreenWidth);
                 }
             } else {
                 if (mVideoWidth > mVideoHeight) {
                     mSurfaceHolder.setFixedSize(mVideoWidth * mScreenWidth / mVideoHeight, mScreenWidth);
+                    Log.d(LOG_TAG, "setFixedSize3 = " + mVideoWidth * mScreenWidth / mVideoHeight + " , " + mScreenWidth);
                 } else {
-                    mSurfaceHolder.setFixedSize(mScreenWidth, mVideoHeight * mScreenWidth / mVideoWidth);
+                    mSurfaceHolder.setFixedSize(mVideoWidth * mScreenHeight / mVideoHeight, mScreenHeight);
+                    Log.d(LOG_TAG, "setFixedSize4 = " + mVideoWidth * mScreenHeight / mVideoHeight + " , " + mScreenHeight);
                 }
             }
         }
